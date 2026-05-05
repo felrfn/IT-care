@@ -193,6 +193,16 @@ const updateTicket = async (req, res) => {
       return res.status(404).json({ error: 'Tiket tidak ditemukan.' });
     }
 
+    // Partial update safety: when a field is omitted, keep existing value.
+    // This prevents accidental NULL updates (e.g., category_id) when frontend only sends status/technician_id.
+    const effectiveCategoryId = (category_id === undefined || category_id === null || category_id === '')
+      ? ticket.category_id
+      : category_id;
+    const effectiveTitle = (title === undefined || title === null) ? ticket.title : title;
+    const effectiveDescription = (description === undefined || description === null) ? ticket.description : description;
+    const effectiveLocation = (location === undefined) ? ticket.location : location;
+    const effectivePriority = (priority === undefined || priority === null) ? ticket.priority : priority;
+
     if (user.role === 'karyawan') {
       if (ticket.user_id !== user.id || ticket.status !== 'open') {
         return res.status(403).json({ error: 'Tiket tidak dapat diedit.' });
@@ -200,7 +210,7 @@ const updateTicket = async (req, res) => {
       await pool.query(
         `UPDATE tickets SET category_id=$1, title=$2, description=$3, location=$4, priority=$5, updated_at=NOW()
          WHERE id=$6`,
-        [category_id || null, title, description, location, priority, id]
+        [effectiveCategoryId, effectiveTitle, effectiveDescription, effectiveLocation, effectivePriority, id]
       );
     } else if (user.role === 'teknisi') {
       const newStatus = status || ticket.status;
@@ -216,7 +226,7 @@ const updateTicket = async (req, res) => {
         `UPDATE tickets SET category_id=$1, title=$2, description=$3, location=$4, priority=$5,
                 status=$6, technician_id=$7, updated_at=NOW()
          WHERE id=$8`,
-        [category_id || null, title, description, location, priority, newStatus,
+        [effectiveCategoryId, effectiveTitle, effectiveDescription, effectiveLocation, effectivePriority, newStatus,
          targetTechnician, id]
       );
     } else if (user.role === 'admin') {
@@ -236,8 +246,8 @@ const updateTicket = async (req, res) => {
         `UPDATE tickets SET category_id=$1, title=$2, description=$3, location=$4, priority=$5,
                 status=$6, admin_note=$7, technician_id=$8, updated_at=NOW()
          WHERE id=$9`,
-        [category_id || null, title, description, location, priority, newStatus,
-         admin_note || null, targetTechnician, id]
+        [effectiveCategoryId, effectiveTitle, effectiveDescription, effectiveLocation, effectivePriority, newStatus,
+         (admin_note === undefined ? ticket.admin_note : (admin_note || null)), targetTechnician, id]
       );
     }
 
