@@ -344,7 +344,7 @@ const softDeleteTicket = async (req, res) => {
     }
 
     await pool.query('UPDATE tickets SET deleted_at=NOW() WHERE id=$1', [id]);
-    req.flash('success', 'Tiket berhasil dipindahkan ke trash.');
+    req.flash('success', 'Tiket berhasil dipindahkan ke sampah.');
     res.redirect('/tickets');
   } catch (err) {
     console.error(err);
@@ -354,7 +354,7 @@ const softDeleteTicket = async (req, res) => {
 };
 
 // ─────────────────────────────────────────────
-// GET /trash  (halaman trash - admin only)
+// GET /trash  (halaman sampah - admin only)
 // ─────────────────────────────────────────────
 const getTrash = async (req, res) => {
   try {
@@ -368,12 +368,12 @@ const getTrash = async (req, res) => {
       ORDER BY t.deleted_at DESC
     `);
     res.render('tickets/trash', {
-      title: 'Trash - IT Care',
+      title: 'Sampah - IT Care',
       tickets: result.rows,
     });
   } catch (err) {
     console.error(err);
-    req.flash('error', 'Gagal memuat trash.');
+    req.flash('error', 'Gagal memuat sampah.');
     res.redirect('/dashboard');
   }
 };
