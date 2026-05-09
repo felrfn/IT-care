@@ -1,5 +1,6 @@
 const bcrypt = require('bcrypt');
 const pool = require('../config/db');
+const { normalizePhone } = require('../utils/phone');
 
 // GET /api/users
 const getUsers = async (req, res) => {
@@ -49,6 +50,13 @@ const postCreateUser = async (req, res) => {
   const { name, email, password, role, department, phone } = req.body;
 
   try {
+    const normalizedPhone = normalizePhone(phone);
+    if (normalizedPhone && normalizedPhone.error) {
+      return res.status(400).json({
+        error: normalizedPhone.error,
+      });
+    }
+
     const existing = await pool.query(
       'SELECT id FROM users WHERE email=$1',
       [email]
@@ -66,7 +74,7 @@ const postCreateUser = async (req, res) => {
       `INSERT INTO users (name, email, password_hash, role, department, phone)
        VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING id, name, email, role, department, phone, created_at`,
-      [name, email, passwordHash, role, department || null, phone || null]
+      [name, email, passwordHash, role, department || null, normalizedPhone?.value ?? null]
     );
 
     return res.status(201).json({
@@ -88,6 +96,13 @@ const updateUser = async (req, res) => {
   const { name, email, password, role, department, phone } = req.body;
 
   try {
+    const normalizedPhone = normalizePhone(phone);
+    if (normalizedPhone && normalizedPhone.error) {
+      return res.status(400).json({
+        error: normalizedPhone.error,
+      });
+    }
+
     let result;
 
     if (password && password.trim() !== '') {
@@ -98,7 +113,7 @@ const updateUser = async (req, res) => {
          SET name=$1, email=$2, password_hash=$3, role=$4, department=$5, phone=$6, updated_at=NOW()
          WHERE id=$7
          RETURNING id, name, email, role, department, phone, updated_at`,
-        [name, email, passwordHash, role, department || null, phone || null, id]
+        [name, email, passwordHash, role, department || null, normalizedPhone?.value ?? null, id]
       );
     } else {
       result = await pool.query(
@@ -106,7 +121,7 @@ const updateUser = async (req, res) => {
          SET name=$1, email=$2, role=$3, department=$4, phone=$5, updated_at=NOW()
          WHERE id=$6
          RETURNING id, name, email, role, department, phone, updated_at`,
-        [name, email, role, department || null, phone || null, id]
+        [name, email, role, department || null, normalizedPhone?.value ?? null, id]
       );
     }
 
