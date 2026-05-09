@@ -121,14 +121,16 @@ const MainLayout = () => {
         </div>
         
         {/* Primary Action Button */}
-        <div className="p-4 pb-2">
-          <Button className="w-full justify-start shadow-sm" asChild>
-            <Link to="/tickets/create">
-              <Plus className="mr-2 h-4 w-4" />
-              Buat Tiket
-            </Link>
-          </Button>
-        </div>
+        {user?.role !== 'teknisi' && (
+          <div className="p-4 pb-2">
+            <Button className="w-full justify-start shadow-sm" asChild>
+              <Link to="/tickets/create">
+                <Plus className="mr-2 h-4 w-4" />
+                Buat Tiket
+              </Link>
+            </Button>
+          </div>
+        )}
 
         <ScrollArea className="flex-1 px-3 py-2">
           <SidebarNav user={user} location={location} />
@@ -188,11 +190,13 @@ const MainLayout = () => {
                   </span>
                 </div>
                 <div className="p-4 pb-2">
-                  <Button className="w-full justify-start shadow-sm" onClick={() => setIsMobileMenuOpen(false)} asChild>
-                    <Link to="/tickets/create">
-                      <Plus className="mr-2 h-4 w-4" /> Buat Tiket
-                    </Link>
-                  </Button>
+                  {user?.role !== 'teknisi' && (
+                    <Button className="w-full justify-start shadow-sm" onClick={() => setIsMobileMenuOpen(false)} asChild>
+                      <Link to="/tickets/create">
+                        <Plus className="mr-2 h-4 w-4" /> Buat Tiket
+                      </Link>
+                    </Button>
+                  )}
                 </div>
                 <ScrollArea className="flex-1 px-3 py-2">
                   <SidebarNav user={user} location={location} onClickNavItem={() => setIsMobileMenuOpen(false)} />
