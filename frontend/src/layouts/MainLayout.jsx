@@ -14,7 +14,9 @@ import {
   Bell,
   Menu,
   Plus,
-  MoreVertical
+  MoreVertical,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
@@ -78,6 +80,24 @@ const MainLayout = () => {
   const [logs, setLogs] = useState([]);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
+  // LOGIKA DARK MODE (Default Light)
+  const [isDark, setIsDark] = useState(() => {
+    // Mengecek localStorage, jika kosong maka default 'light'
+    const saved = localStorage.getItem('theme');
+    return saved === 'dark';
+  });
+
+  useEffect(() => {
+    const root = window.document.documentElement;
+    if (isDark) {
+      root.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    } else {
+      root.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    }
+  }, [isDark]);
+
   useEffect(() => {
     const fetchLogs = async () => {
       try {
@@ -97,7 +117,6 @@ const MainLayout = () => {
     navigate('/login');
   };
 
-  // Determine page title based on path
   const getPageTitle = () => {
     const path = location.pathname;
     if (path === '/') return 'Dashboard';
@@ -122,21 +141,20 @@ const MainLayout = () => {
         
         {/* Primary Action Button */}
         {user?.role !== 'teknisi' && (
-          <div className="p-4 pb-2">
-            <Button className="w-full justify-start shadow-sm" asChild>
-              <Link to="/tickets/create">
-                <Plus className="mr-2 h-4 w-4" />
-                Buat Tiket
-              </Link>
-            </Button>
-          </div>
+        <div className="p-4 pb-2">
+          <Button className="w-full justify-start shadow-sm" asChild>
+            <Link to="/tickets/create">
+              <Plus className="mr-2 h-4 w-4" />
+              Buat Tiket
+            </Link>
+          </Button>
+        </div>
         )}
 
         <ScrollArea className="flex-1 px-3 py-2">
           <SidebarNav user={user} location={location} />
         </ScrollArea>
 
-        {/* User Profile Footer */}
         <div className="p-3 mt-auto border-t border-border">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -191,11 +209,11 @@ const MainLayout = () => {
                 </div>
                 <div className="p-4 pb-2">
                   {user?.role !== 'teknisi' && (
-                    <Button className="w-full justify-start shadow-sm" onClick={() => setIsMobileMenuOpen(false)} asChild>
-                      <Link to="/tickets/create">
-                        <Plus className="mr-2 h-4 w-4" /> Buat Tiket
-                      </Link>
-                    </Button>
+                  <Button className="w-full justify-start shadow-sm" onClick={() => setIsMobileMenuOpen(false)} asChild>
+                    <Link to="/tickets/create">
+                      <Plus className="mr-2 h-4 w-4" /> Buat Tiket
+                    </Link>
+                  </Button>
                   )}
                 </div>
                 <ScrollArea className="flex-1 px-3 py-2">
@@ -215,7 +233,36 @@ const MainLayout = () => {
             </h1>
           </div>
 
-          <div className="flex items-center">
+          <div className="flex items-center gap-4">
+            {/* TOGGLE SWITCH TEMA */}
+            <div 
+              className={cn(
+                "relative flex items-center w-14 h-7 rounded-full p-1 cursor-pointer transition-colors duration-300 shadow-inner",
+                isDark ? "bg-slate-700" : "bg-amber-100"
+              )}
+              onClick={() => setIsDark(!isDark)}
+            >
+              {/* Bulatan Switch */}
+              <div 
+                className={cn(
+                  "flex items-center justify-center w-5 h-5 rounded-full shadow-md transform transition-transform duration-300 ease-in-out bg-white",
+                  isDark ? "translate-x-7" : "translate-x-0"
+                )}
+              >
+                {isDark ? (
+                  <Moon className="h-3 w-3 text-slate-700" fill="currentColor" />
+                ) : (
+                  <Sun className="h-3 w-3 text-amber-500" fill="currentColor" />
+                )}
+              </div>
+              
+              {/* Ikon Latar Belakang (Opsional untuk estetika) */}
+              <div className="absolute inset-0 flex justify-between items-center px-2 pointer-events-none">
+                <Sun className={cn("h-3 w-3 transition-opacity", isDark ? "opacity-30 text-white" : "opacity-0")} />
+                <Moon className={cn("h-3 w-3 transition-opacity", isDark ? "opacity-0" : "opacity-30 text-slate-500")} />
+              </div>
+            </div>
+
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="relative text-muted-foreground hover:text-foreground rounded-full">
