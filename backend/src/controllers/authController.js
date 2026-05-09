@@ -1,5 +1,6 @@
 const bcrypt = require('bcrypt');
 const pool = require('../config/db');
+const { normalizePhone } = require('../utils/phone');
 
 // POST /api/auth/login
 const postLogin = async (req, res) => {
@@ -38,6 +39,11 @@ const postLogin = async (req, res) => {
 const postRegister = async (req, res) => {
   const { name, email, password, role, department, phone } = req.body;
   try {
+    const normalizedPhone = normalizePhone(phone);
+    if (normalizedPhone && normalizedPhone.error) {
+      return res.status(400).json({ error: normalizedPhone.error });
+    }
+
     // Cek email duplikat
     const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
     if (existing.rows.length > 0) {
@@ -48,7 +54,7 @@ const postRegister = async (req, res) => {
     const result = await pool.query(
       `INSERT INTO users (name, email, password_hash, role, department, phone)
        VALUES ($1, $2, $3, $4, $5, $6) RETURNING id, name, email, role`,
-      [name, email, passwordHash, role || 'karyawan', department, phone]
+      [name, email, passwordHash, role || 'karyawan', department, normalizedPhone?.value ?? null]
     );
 
     res.status(201).json({ message: 'Registrasi berhasil!', user: result.rows[0] });

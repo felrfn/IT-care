@@ -30,6 +30,17 @@ const Users = () => {
     name: '', email: '', role: '', department: '', phone: '', password: ''
   });
 
+  const sanitizePhone = (value) => {
+    const raw = String(value ?? '');
+    let out = '';
+    for (let i = 0; i < raw.length; i++) {
+      const ch = raw[i];
+      if (ch >= '0' && ch <= '9') out += ch;
+      else if (ch === '+' && i === 0) out += ch;
+    }
+    return out;
+  };
+
   const fetchUsers = async () => {
     try {
       const res = await api.get('/users');
@@ -251,8 +262,12 @@ const Users = () => {
               <Label htmlFor="phone">Telepon</Label>
               <Input
                 id="phone"
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                pattern="^(\\+?62|0)[0-9]{9,13}$"
                 value={editFormData.phone}
-                onChange={(e) => setEditFormData({ ...editFormData, phone: e.target.value })}
+                onChange={(e) => setEditFormData({ ...editFormData, phone: sanitizePhone(e.target.value) })}
               />
             </div>
             <DialogFooter>
