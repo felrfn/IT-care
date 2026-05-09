@@ -23,12 +23,12 @@ INSERT INTO categories (name, description) VALUES
 ON CONFLICT (name) DO NOTHING;
 
 -- Tickets
-INSERT INTO tickets (user_id, category_id, technician_id, title, description, location, priority, status) VALUES
-(3, 1, 2, 'Komputer tidak bisa menyala', 'Komputer di meja saya tidak bisa dinyalakan sejak tadi pagi. Sudah dicoba tekan tombol power tapi tidak ada respons sama sekali.', 'Ruang Finance Lt. 2', 'high', 'in_progress'),
-(3, 3, 2, 'Internet lambat', 'Koneksi internet sangat lambat, tidak bisa akses aplikasi ERP.', 'Ruang Finance Lt. 2', 'medium', 'open'),
-(5, 2, NULL, 'Aplikasi HRIS error', 'Aplikasi HRIS menampilkan error 500 saat login.', 'Ruang HR Lt. 1', 'high', 'open'),
-(5, 4, 4, 'Reset password email', 'Lupa password email kantor dan tidak bisa melakukan reset sendiri.', 'Ruang HR Lt. 1', 'low', 'resolved'),
-(3, 1, 2, 'Printer tidak bisa print', 'Printer di ruang finance tidak bisa mencetak dokumen.', 'Ruang Finance Lt. 2', 'medium', 'resolved');
+INSERT INTO tickets (ticket_number, user_id, category_id, technician_id, title, description, location, priority, status) VALUES
+('TKT-001', 3, 1, 2, 'Komputer tidak bisa menyala', 'Komputer di meja saya tidak bisa dinyalakan sejak tadi pagi. Sudah dicoba tekan tombol power tapi tidak ada respons sama sekali.', 'Ruang Finance Lt. 2', 'high', 'in_progress'),
+('TKT-002', 3, 3, 2, 'Internet lambat', 'Koneksi internet sangat lambat, tidak bisa akses aplikasi ERP.', 'Ruang Finance Lt. 2', 'medium', 'open'),
+('TKT-003', 5, 2, NULL, 'Aplikasi HRIS error', 'Aplikasi HRIS menampilkan error 500 saat login.', 'Ruang HR Lt. 1', 'high', 'open'),
+('TKT-004', 5, 4, 4, 'Reset password email', 'Lupa password email kantor dan tidak bisa melakukan reset sendiri.', 'Ruang HR Lt. 1', 'low', 'resolved'),
+('TKT-005', 3, 1, 2, 'Printer tidak bisa print', 'Printer di ruang finance tidak bisa mencetak dokumen.', 'Ruang Finance Lt. 2', 'medium', 'resolved');
 
 -- Ticket Notes
 INSERT INTO ticket_notes (ticket_id, user_id, note) VALUES
