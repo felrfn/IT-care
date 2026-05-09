@@ -22,6 +22,7 @@ const Dashboard = () => {
   const { user } = useAuth();
   const [data, setData] = useState({ stats: {}, recentTickets: [] });
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('all');
 
   useEffect(() => {
     const fetchDashboard = async () => {
@@ -40,6 +41,16 @@ const Dashboard = () => {
   if (loading) return <div className="p-8 text-center text-muted-foreground text-sm">Memuat dashboard...</div>;
 
   const { stats, recentTickets } = data;
+
+  const showRequester = user?.role !== 'karyawan';
+  const showTechnician = user?.role !== 'teknisi';
+  const tableColSpan = 6 + (showRequester ? 1 : 0) + (showTechnician ? 1 : 0);
+
+  const getTicketsForTab = (tab) => {
+    if (!Array.isArray(recentTickets)) return [];
+    if (tab === 'all') return recentTickets;
+    return recentTickets.filter((t) => t.status === tab);
+  };
 
   const getStatusBadgeVariant = (status) => {
     switch (status) {
@@ -84,7 +95,7 @@ const Dashboard = () => {
 
       {/* Data Table Section */}
       <Card className="border-border shadow-sm rounded-xl overflow-hidden">
-        <Tabs defaultValue="all" className="w-full">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <CardHeader className="border-b border-border bg-muted/20 px-6 py-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 space-y-0">
             <TabsList className="bg-transparent p-0 h-auto gap-4">
               <TabsTrigger value="all" className="data-[state=active]:bg-transparent data-[state=active]:shadow-none data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-1 py-1.5 font-medium text-sm">Semua Tiket</TabsTrigger>
@@ -97,77 +108,80 @@ const Dashboard = () => {
                 <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-muted-foreground" />
                 <Input type="text" placeholder="Cari..." className="pl-8 h-8 w-[150px] lg:w-[200px] text-xs bg-background" />
               </div>
-              <Button size="sm" className="h-8 text-xs" asChild>
-                <Link to="/tickets/create">
-                  <Plus className="mr-1 h-3.5 w-3.5" /> Tiket
-                </Link>
-              </Button>
+              {user?.role !== 'teknisi' && (
+                <Button size="sm" className="h-8 text-xs" asChild>
+                  <Link to="/tickets/create">
+                    <Plus className="mr-1 h-3.5 w-3.5" /> Tiket
+                  </Link>
+                </Button>
+              )}
             </div>
           </CardHeader>
           <CardContent className="p-0">
-            <TabsContent value="all" className="m-0 border-none p-0 outline-none">
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader className="bg-muted/50">
-                    <TableRow className="border-border hover:bg-transparent">
-                      <TableHead className="h-9 py-2 text-xs font-medium">Judul</TableHead>
-                      <TableHead className="h-9 py-2 text-xs font-medium">Status</TableHead>
-                      <TableHead className="h-9 py-2 text-xs font-medium">Prioritas</TableHead>
-                      <TableHead className="h-9 py-2 text-xs font-medium">Kategori</TableHead>
-                      {user?.role !== 'karyawan' && <TableHead className="h-9 py-2 text-xs font-medium">Pemohon</TableHead>}
-                      {user?.role !== 'teknisi' && <TableHead className="h-9 py-2 text-xs font-medium">Teknisi</TableHead>}
-                      <TableHead className="h-9 py-2 text-xs font-medium">Tanggal</TableHead>
-                      <TableHead className="h-9 py-2 text-xs font-medium text-right">Aksi</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {(!Array.isArray(recentTickets) || recentTickets.length === 0) ? (
-                      <TableRow>
-                        <TableCell colSpan={8} className="h-24 text-center text-muted-foreground text-sm">
-                          Belum ada tiket
-                        </TableCell>
+            {['all', 'open', 'in_progress', 'resolved'].map((tab) => {
+              const ticketsForTab = getTicketsForTab(tab);
+              return (
+              <TabsContent key={tab} value={tab} className="m-0 border-none p-0 outline-none">
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader className="bg-muted/50">
+                      <TableRow className="border-border hover:bg-transparent">
+                        <TableHead className="h-9 py-2 text-xs font-medium">Judul</TableHead>
+                        <TableHead className="h-9 py-2 text-xs font-medium">Status</TableHead>
+                        <TableHead className="h-9 py-2 text-xs font-medium">Prioritas</TableHead>
+                        <TableHead className="h-9 py-2 text-xs font-medium">Kategori</TableHead>
+                        {showRequester && <TableHead className="h-9 py-2 text-xs font-medium">Pemohon</TableHead>}
+                        {showTechnician && <TableHead className="h-9 py-2 text-xs font-medium">Teknisi</TableHead>}
+                        <TableHead className="h-9 py-2 text-xs font-medium">Tanggal</TableHead>
+                        <TableHead className="h-9 py-2 text-xs font-medium text-right">Aksi</TableHead>
                       </TableRow>
-                    ) : (
-                      recentTickets.map(ticket => (
-                        <TableRow key={ticket.id} className="border-border">
-                          <TableCell className="py-2.5">
-                            <div className="font-semibold text-primary text-xs mb-1">
-                               {ticket.ticket_number || `#${ticket.id}`}
-                            </div>
-                            <div className="font-medium max-w-[200px] truncate text-sm text-foreground" title={ticket.title}>
-                               {ticket.title}
-                            </div>
-                          </TableCell>
-                          <TableCell className="py-2.5">
-                            <Badge variant={getStatusBadgeVariant(ticket.status)} className="uppercase text-[9px] tracking-wider font-semibold">
-                              {ticket.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="py-2.5">
-                            <Badge variant="outline" className="capitalize text-[10px] font-normal tracking-wide text-muted-foreground">
-                              {ticket.priority}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="py-2.5 text-xs text-muted-foreground">{ticket.category}</TableCell>
-                          {user?.role !== 'karyawan' && <TableCell className="py-2.5 text-xs text-foreground">{ticket.requester}</TableCell>}
-                          {user?.role !== 'teknisi' && <TableCell className="py-2.5 text-xs text-muted-foreground">{ticket.technician || '-'}</TableCell>}
-                          <TableCell className="py-2.5 text-xs text-muted-foreground">{new Date(ticket.created_at).toLocaleDateString()}</TableCell>
-                          <TableCell className="py-2.5 text-right">
-                            <Button variant="ghost" size="sm" asChild className="h-7 text-xs px-2 hover:bg-muted">
-                              <Link to={`/tickets/${ticket.id}`}>Detail</Link>
-                            </Button>
+                    </TableHeader>
+                    <TableBody>
+                      {(ticketsForTab.length === 0) ? (
+                        <TableRow>
+                          <TableCell colSpan={tableColSpan} className="h-24 text-center text-muted-foreground text-sm">
+                            Belum ada tiket
                           </TableCell>
                         </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </TabsContent>
-            {/* Adding basic empty states for other tabs just for UI completeness */}
-            <TabsContent value="open" className="m-0 p-6 text-center text-sm text-muted-foreground">Menampilkan tiket Open (Demo Mode)</TabsContent>
-            <TabsContent value="in_progress" className="m-0 p-6 text-center text-sm text-muted-foreground">Menampilkan tiket Dalam Proses (Demo Mode)</TabsContent>
-            <TabsContent value="resolved" className="m-0 p-6 text-center text-sm text-muted-foreground">Menampilkan tiket Selesai (Demo Mode)</TabsContent>
+                      ) : (
+                        ticketsForTab.map(ticket => (
+                          <TableRow key={ticket.id} className="border-border">
+                            <TableCell className="py-2.5">
+                              <div className="font-semibold text-primary text-xs mb-1">
+                                {ticket.ticket_number || `#${ticket.id}`}
+                              </div>
+                              <div className="font-medium max-w-[200px] truncate text-sm text-foreground" title={ticket.title}>
+                                {ticket.title}
+                              </div>
+                            </TableCell>
+                            <TableCell className="py-2.5">
+                              <Badge variant={getStatusBadgeVariant(ticket.status)} className="uppercase text-[9px] tracking-wider font-semibold">
+                                {ticket.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="py-2.5">
+                              <Badge variant="outline" className="capitalize text-[10px] font-normal tracking-wide text-muted-foreground">
+                                {ticket.priority}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="py-2.5 text-xs text-muted-foreground">{ticket.category}</TableCell>
+                            {showRequester && <TableCell className="py-2.5 text-xs text-foreground">{ticket.requester}</TableCell>}
+                            {showTechnician && <TableCell className="py-2.5 text-xs text-muted-foreground">{ticket.technician || '-'}</TableCell>}
+                            <TableCell className="py-2.5 text-xs text-muted-foreground">{new Date(ticket.created_at).toLocaleDateString()}</TableCell>
+                            <TableCell className="py-2.5 text-right">
+                              <Button variant="ghost" size="sm" asChild className="h-7 text-xs px-2 hover:bg-muted">
+                                <Link to={`/tickets/${ticket.id}`}>Detail</Link>
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </TabsContent>
+              );
+            })}
           </CardContent>
           <div className="p-3 border-t border-border bg-muted/20 text-center">
             <Link to="/tickets" className="text-xs text-primary hover:underline font-medium inline-flex items-center">
