@@ -23,8 +23,24 @@ const Register = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
+  const sanitizePhone = (value) => {
+    const raw = String(value ?? '');
+    let out = '';
+    for (let i = 0; i < raw.length; i++) {
+      const ch = raw[i];
+      if (ch >= '0' && ch <= '9') out += ch;
+      else if (ch === '+' && i === 0) out += ch;
+    }
+    return out;
+  };
+
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    if (name === 'phone') {
+      setFormData({ ...formData, phone: sanitizePhone(value) });
+      return;
+    }
+    setFormData({ ...formData, [name]: value });
   };
 
   const handleSubmit = async (e) => {
@@ -161,6 +177,10 @@ const Register = () => {
                   <Input 
                     id="phone"
                     name="phone"
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="tel"
+                    pattern="^(\\+?62|0)[0-9]{9,13}$"
                     placeholder="0812..."
                     value={formData.phone} 
                     onChange={handleChange} 
