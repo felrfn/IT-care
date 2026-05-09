@@ -3,6 +3,7 @@ import api from '@/services/api';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Table,
   TableBody,
@@ -11,15 +12,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { FolderOpen, Plus, Search, MoreHorizontal } from 'lucide-react';
+import { FolderOpen, Plus, Search, MoreHorizontal, Edit2 } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 const Categories = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [search, setSearch] = useState('');
+  
+  // State untuk mode edit
+  const [editId, setEditId] = useState(null);
 
   const fetchCategories = async () => {
     try {
@@ -36,19 +41,39 @@ const Categories = () => {
     fetchCategories();
   }, []);
 
-  const handleAdd = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!name.trim()) return;
     setIsSubmitting(true);
+    
     try {
-      await api.post('/categories', { name });
-      setName('');
+      if (editId) {
+        // Mode Edit
+        await api.put(`/categories/${editId}`, { name, description });
+      } else {
+        // Mode Tambah Baru
+        await api.post('/categories', { name, description });
+      }
+      
+      handleResetForm();
       fetchCategories();
     } catch (err) {
-      alert(err.response?.data?.error || 'Gagal menambah kategori');
+      alert(err.response?.data?.error || 'Gagal menyimpan kategori');
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleEditClick = (category) => {
+    setEditId(category.id);
+    setName(category.name);
+    setDescription(category.description || '');
+  };
+
+  const handleResetForm = () => {
+    setEditId(null);
+    setName('');
+    setDescription('');
   };
 
   const handleDelete = async (id) => {
@@ -62,7 +87,7 @@ const Categories = () => {
   };
 
   const filteredCategories = Array.isArray(categories) 
-    ? categories.filter(c => c.name.toLowerCase().includes(search.toLowerCase()))
+    ? categories.filter(c => c.name.toLowerCase().includes(search.toLowerCase()) || (c.description && c.description.toLowerCase().includes(search.toLowerCase())))
     : [];
 
   return (
@@ -72,11 +97,11 @@ const Categories = () => {
         <Card className="h-fit border-border shadow-sm rounded-xl">
           <CardHeader className="pb-4 border-b border-border bg-muted/20">
             <CardTitle className="text-sm font-semibold flex items-center gap-2 text-foreground">
-              <FolderOpen className="h-4 w-4 text-primary" /> Tambah Kategori
+              <FolderOpen className="h-4 w-4 text-primary" /> {editId ? 'Edit Kategori' : 'Tambah Kategori'}
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-4">
-            <form onSubmit={handleAdd} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-1.5">
                 <label htmlFor="name" className="text-xs font-medium text-foreground">Nama Kategori</label>
                 <Input 
@@ -89,9 +114,27 @@ const Categories = () => {
                   className="h-9 text-sm bg-background"
                 />
               </div>
-              <Button type="submit" className="w-full h-9" disabled={isSubmitting}>
-                <Plus className="h-4 w-4 mr-2" /> Simpan
-              </Button>
+              <div className="space-y-1.5">
+                <label htmlFor="description" className="text-xs font-medium text-foreground">Deskripsi</label>
+                <Textarea 
+                  id="description"
+                  value={description} 
+                  onChange={e => setDescription(e.target.value)} 
+                  placeholder="Deskripsi singkat mengenai kategori ini..."
+                  disabled={isSubmitting}
+                  className="min-h-[80px] text-sm bg-background resize-none"
+                />
+              </div>
+              <div className="flex gap-2 pt-2">
+                <Button type="submit" className="w-full h-9" disabled={isSubmitting}>
+                  {editId ? 'Simpan Perubahan' : <><Plus className="h-4 w-4 mr-2" /> Simpan</>}
+                </Button>
+                {editId && (
+                  <Button type="button" variant="outline" className="w-full h-9" onClick={handleResetForm} disabled={isSubmitting}>
+                    Batal
+                  </Button>
+                )}
+              </div>
             </form>
           </CardContent>
         </Card>
@@ -120,20 +163,21 @@ const Categories = () => {
               <Table>
                 <TableHeader className="bg-muted/50">
                   <TableRow className="border-border hover:bg-transparent">
-                    <TableHead className="h-9 py-2 text-xs font-medium">Nama Kategori</TableHead>
+                    <TableHead className="w-[30%] h-9 py-2 text-xs font-medium">Nama Kategori</TableHead>
+                    <TableHead className="h-9 py-2 text-xs font-medium">Deskripsi</TableHead>
                     <TableHead className="w-[80px] h-9 py-2 text-xs font-medium text-right"></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {loading ? (
                     <TableRow>
-                      <TableCell colSpan={2} className="h-24 text-center text-muted-foreground text-sm">
+                      <TableCell colSpan={3} className="h-24 text-center text-muted-foreground text-sm">
                         Memuat data kategori...
                       </TableCell>
                     </TableRow>
                   ) : filteredCategories.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={2} className="h-24 text-center text-muted-foreground text-sm">
+                      <TableCell colSpan={3} className="h-24 text-center text-muted-foreground text-sm">
                         Belum ada kategori.
                       </TableCell>
                     </TableRow>
@@ -141,6 +185,9 @@ const Categories = () => {
                     filteredCategories.map(c => (
                       <TableRow key={c.id} className="border-border group">
                         <TableCell className="py-2.5 font-medium text-sm text-foreground">{c.name}</TableCell>
+                        <TableCell className="py-2.5 text-sm text-muted-foreground">
+                          {c.description ? c.description : <span className="italic opacity-50">Tidak ada deskripsi</span>}
+                        </TableCell>
                         <TableCell className="py-2.5 text-right">
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
@@ -150,6 +197,9 @@ const Categories = () => {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleEditClick(c)}>
+                                Edit
+                              </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => handleDelete(c.id)} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
                                 Hapus
                               </DropdownMenuItem>
