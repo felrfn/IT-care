@@ -81,10 +81,10 @@ http://localhost:3000
 
 Setelah menjalankan seed, gunakan akun berikut untuk login:
 
-| Role | Email | Password |
-|---|---|---|
-| Admin | admin@itcare.id | password |
-| Teknisi | teknisi@itcare.id | password |
+| Role     | Email              | Password |
+| -------- | ------------------ | -------- |
+| Admin    | admin@itcare.id    | password |
+| Teknisi  | teknisi@itcare.id  | password |
 | Karyawan | karyawan@itcare.id | password |
 
 ## Available Scripts
@@ -98,12 +98,12 @@ npm run db:seed   # mengisi data awal
 
 ## Environment Variables
 
-| Variable | Description |
-|---|---|
-| `PORT` | Port aplikasi Express |
-| `NODE_ENV` | Environment aplikasi |
-| `DATABASE_URL` | Connection string PostgreSQL dari Neon |
-| `SESSION_SECRET` | Secret key untuk session |
+| Variable         | Description                            |
+| ---------------- | -------------------------------------- |
+| `PORT`           | Port aplikasi Express                  |
+| `NODE_ENV`       | Environment aplikasi                   |
+| `DATABASE_URL`   | Connection string PostgreSQL dari Neon |
+| `SESSION_SECRET` | Secret key untuk session               |
 
 ## Database Setup Notes
 
@@ -134,6 +134,65 @@ src/
 ├── routes/
 └── views/
 ```
+
+---
+
+## API
+
+### Health
+
+- `GET /` – Pemeriksaan status API (`{ message: "IT Care API is running" }`)
+
+### Auth
+
+- `POST /api/auth/login` – Login (membuat session)
+- `POST /api/auth/register` – Registrasi user
+- `POST /api/auth/logout` – Logout (menghapus session)
+- `GET /api/auth/me` – Mengambil data user yang sedang login (dari session)
+
+### Dashboard
+
+- `GET /api/dashboard` – Statistik dashboard + tiket terbaru (sesuai role)
+
+### Tickets
+
+- `GET /api/tickets` – Daftar tiket
+- `POST /api/tickets` – Membuat tiket (role: `admin`, `karyawan`)
+- `GET /api/tickets/:id` – Detail tiket + catatan + log + daftar teknisi (untuk admin/teknisi)
+- `PUT /api/tickets/:id` – Update tiket (tergantung role)
+- `DELETE /api/tickets/:id` – Pindah ke trash
+
+### Catatan Tiket
+
+- `POST /api/tickets/:id/notes` – Menambahkan catatan (komen) pada tiket
+
+### Log Tiket / Notifikasi
+
+- `GET /api/tickets/api/logs` – Log status terbaru buat user yang login (limit 5)
+
+### Trash (Admin)
+
+- `GET /api/tickets/trash/all` – Daftar tiket di trash (admin)
+- `POST /api/tickets/:id/restore` – Restore tiket (admin)
+- `DELETE /api/tickets/:id/hard` – Menghapus tiket secara permanen (admin)
+
+### Kategori
+
+- `GET /api/categories` – Daftar kategori
+- `POST /api/categories` – Membuat kategori (role: `admin`, `teknisi`)
+- `PUT /api/categories/:id` – Update kategori (role: `admin`, `teknisi`)
+- `DELETE /api/categories/:id` – Hapus kategori (role: `admin`, `teknisi`)
+
+### Pengguna (Admin)
+
+- `GET /api/users` – Daftar user
+- `POST /api/users` – Membuat user
+- `PUT /api/users/:id` – Update user
+- `DELETE /api/users/:id` – Hapus user
+
+### Laporan
+
+- `GET /api/reports` – Laporan + ringkasan + statistik kategori + daftar kategori (role: `admin`, `teknisi`)
 
 ## Important Notes
 
